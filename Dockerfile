@@ -13,11 +13,6 @@ RUN a2enmod rewrite
 # Installation de Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-# Configuration Apache
-ENV APACHE_DOCUMENT_ROOT /var/www/html/public
-RUN sed -ri -e 's!/var/www/html!/var/www/html/public!g' \
-    /etc/apache2/sites-available/*.conf
-
 # Copie du projet
 WORKDIR /var/www/html
 COPY . .
@@ -32,6 +27,15 @@ RUN touch /var/www/html/database/database.sqlite
 RUN chown -R www-data:www-data /var/www/html \
     && chmod -R 775 /var/www/html/storage \
     && chmod -R 775 /var/www/html/database
+
+# Configuration Apache pour pointer vers /public
+RUN echo '<VirtualHost *:80>\n\
+    DocumentRoot /var/www/html/public\n\
+    <Directory /var/www/html/public>\n\
+        AllowOverride All\n\
+        Require all granted\n\
+    </Directory>\n\
+</VirtualHost>' > /etc/apache2/sites-available/000-default.conf
 
 # Script de démarrage
 COPY docker-start.sh /usr/local/bin/start.sh
