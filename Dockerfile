@@ -43,3 +43,8 @@ RUN chmod +x /usr/local/bin/start.sh
 
 EXPOSE 80
 CMD ["/usr/local/bin/start.sh"]
+# Installation Node.js et compilation CSS
+RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash - \
+    && apt-get install -y nodejs \
+    && npm install \
+    && npm run prod
