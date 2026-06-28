@@ -1,14 +1,12 @@
 FROM php:8.1-apache
 
-# Installation des extensions PHP nécessaires
+# Installation des extensions PHP et Node.js
 RUN apt-get update && apt-get install -y \
-    libzip-dev \
-    zip \
-    unzip \
-    && docker-php-ext-install zip pdo pdo_mysql
-
-# Activation du module rewrite Apache
-RUN a2enmod rewrite
+    libzip-dev zip unzip curl \
+    && docker-php-ext-install zip pdo pdo_mysql \
+    && curl -fsSL https://deb.nodesource.com/setup_18.x | bash - \
+    && apt-get install -y nodejs \
+    && a2enmod rewrite
 
 # Installation de Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
@@ -17,8 +15,11 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 WORKDIR /var/www/html
 COPY . .
 
-# Installation des dépendances
+# Installation des dépendances PHP
 RUN composer install --no-dev --optimize-autoloader --ignore-platform-reqs
+
+# Compilation du CSS et JS
+RUN npm install && npm run prod
 
 # Création du fichier SQLite
 RUN touch /var/www/html/database/database.sqlite
@@ -28,7 +29,7 @@ RUN chown -R www-data:www-data /var/www/html \
     && chmod -R 775 /var/www/html/storage \
     && chmod -R 775 /var/www/html/database
 
-# Configuration Apache pour pointer vers /public
+# Configuration Apache
 RUN echo '<VirtualHost *:80>\n\
     DocumentRoot /var/www/html/public\n\
     <Directory /var/www/html/public>\n\
@@ -43,8 +44,3 @@ RUN chmod +x /usr/local/bin/start.sh
 
 EXPOSE 80
 CMD ["/usr/local/bin/start.sh"]
-# Installation Node.js et compilation CSS
-RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash - \
-    && apt-get install -y nodejs \
-    && npm install \
-    && npm run prod
