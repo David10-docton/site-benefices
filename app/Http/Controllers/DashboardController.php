@@ -7,25 +7,34 @@ use App\Models\Product;
 
 class DashboardController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('auth');
+    }
+
     public function index()
     {
-        // Total des bénéfices du vendeur connecté
-        $totalBenefice = Sale::whereHas('product', function ($query) {
-            $query->where('user_id', auth()->id());
-        })->sum('benefice_calcule');
+        try {
+            $totalBenefice = Sale::whereHas('product', function ($query) {
+                $query->where('user_id', auth()->id());
+            })->sum('benefice_calcule');
 
-        // Nombre total de produits
-        $totalProduits = Product::where('user_id', auth()->id())->count();
+            $totalProduits = Product::where('user_id', auth()->id())->count();
 
-        // Nombre total de ventes
-        $totalVentes = Sale::whereHas('product', function ($query) {
-            $query->where('user_id', auth()->id());
-        })->count();
+            $totalVentes = Sale::whereHas('product', function ($query) {
+                $query->where('user_id', auth()->id());
+            })->count();
 
-        // Les 5 dernières ventes
-        $dernieresVentes = Sale::whereHas('product', function ($query) {
-            $query->where('user_id', auth()->id());
-        })->with('product')->latest()->take(5)->get();
+            $dernieresVentes = Sale::whereHas('product', function ($query) {
+                $query->where('user_id', auth()->id());
+            })->with('product')->latest()->take(5)->get();
+
+        } catch (\Exception $e) {
+            $totalBenefice = 0;
+            $totalProduits = 0;
+            $totalVentes = 0;
+            $dernieresVentes = collect();
+        }
 
         return view('dashboard', compact(
             'totalBenefice',
