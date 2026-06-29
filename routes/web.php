@@ -10,6 +10,11 @@ Route::get('/', function () {
     return redirect()->route('dashboard');
 });
 
+// Redirection /home vers /dashboard
+Route::get('/home', function () {
+    return redirect()->route('dashboard');
+});
+
 // Routes protégées (vendeur doit être connecté)
 Route::middleware(['auth'])->group(function () {
 
@@ -27,6 +32,3 @@ Route::middleware(['auth'])->group(function () {
 
 // Routes d'authentification (login, register, logout)
 Auth::routes();
-Auth::routes();
-
-Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
